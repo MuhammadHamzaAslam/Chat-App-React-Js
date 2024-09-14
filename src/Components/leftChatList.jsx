@@ -1,8 +1,27 @@
 import { TextField } from "@mui/material";
 import ChatList from "./chatList";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
+import { auth } from "../Config/firebase";
 
 export default function LeftBar() {
+  const navigate = useNavigate("");
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const uid = user.uid;
+    } else {
+      navigate("/login");
+    }
+  });
+  const signOutUser = () => {
+    signOut(auth)
+      .then(() => {
+        navigate("/login");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
   return (
     <section className="border border-black w-[40%] h-[100vh] ">
       <section className="flex justify-between items-center">
@@ -13,10 +32,13 @@ export default function LeftBar() {
             className="h-[40px] w-[40px] rounded-full "
             alt=""
           />
-          <Link to={'/addUser'}>
+          <Link to={"/addUser"}>
             <i className="bx bxs-user-plus text-4xl"></i>
           </Link>
-          <i className="bx bx-log-out-circle me-4 text-3xl"></i>
+          <i
+            className="bx bx-log-out-circle me-4 text-3xl cursor-pointer"
+            onClick={signOutUser}
+          ></i>
         </div>
       </section>
 

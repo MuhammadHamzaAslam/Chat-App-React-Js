@@ -30,16 +30,13 @@ function SignupForm() {
       );
       const user = userCredential.user;
 
-      // Store user data in Firestore
       const docRef = await addDoc(collection(db, "chatAppSignUpUser"), {
         userName: userName,
         email: email,
         password: password,
         uid: user.uid,
       });
-      console.log("Document written with ID: ", docRef.id);
 
-      // Display success message
       Swal.fire({
         icon: "success",
         title: "Account Created",
@@ -48,9 +45,6 @@ function SignupForm() {
 
       navigate("/");
     } catch (error) {
-      console.error("Error during signup: ", error);
-
-      // Show error with SweetAlert
       Swal.fire({
         icon: "error",
         title: "Signup Failed",
