@@ -1,25 +1,69 @@
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
+import { collection, addDoc } from "firebase/firestore";
 import { useNavigate } from "react-router";
-
+import { auth, db } from "../Config/firebase";
+import Swal from "sweetalert2";
 function SignupForm() {
   const [email, setEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate("");
-  const loginUser = () => {
+
+  const SignUpUser = async () => {
     if (!userName || !email || !password) {
-      alert("Plz Fill All Fields");
-    } else {
-      console.log("email:", email);
-      console.log("password:", password);
-      console.log("username:", userName);
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Information",
+        text: "Please fill all fields",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+      const user = userCredential.user;
+
+      // Store user data in Firestore
+      const docRef = await addDoc(collection(db, "chatAppSignUpUser"), {
+        userName: userName,
+        email: email,
+        password: password,
+        uid: user.uid,
+      });
+      console.log("Document written with ID: ", docRef.id);
+
+      // Display success message
+      Swal.fire({
+        icon: "success",
+        title: "Account Created",
+        text: "Your account has been successfully created!",
+      });
+
       navigate("/");
+    } catch (error) {
+      console.error("Error during signup: ", error);
+
+      // Show error with SweetAlert
+      Swal.fire({
+        icon: "error",
+        title: "Signup Failed",
+        text: error.message,
+      });
+    } finally {
+      setLoading(false);
       setUserName("");
       setEmail("");
       setPassword("");
     }
   };
+
   return (
     <section className="flex justify-center items-center min-h-screen bg-gradient-to-br from-purple-600 to-indigo-600">
       <div className="w-[380px] bg-white rounded-xl shadow-2xl p-8">
@@ -58,14 +102,18 @@ function SignupForm() {
         </div>
         <div className="flex justify-center">
           <button
-            className="w-full bg-purple-500 text-white py-3 rounded-md font-semibold shadow-md hover:bg-purple-600 hover:shadow-lg transition duration-300 ease-in-out"
-            onClick={loginUser}
+            className={`w-full bg-purple-500 text-white py-3 rounded-md font-semibold shadow-md hover:bg-purple-600 hover:shadow-lg transition duration-300 ease-in-out ${
+              loading ? "opacity-50" : ""
+            }`}
+            onClick={SignUpUser}
+            disabled={loading}
           >
-            Create Account
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </div>
       </div>
     </section>
   );
 }
+
 export default SignupForm;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router";
 
 function LoginForm() {
@@ -10,9 +11,19 @@ function LoginForm() {
     if (!email || !password) {
       alert("Plz Fill All Fields");
     } else {
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+          // ...
+          navigate("/");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+        });
       console.log("email:", email);
       console.log("password:", password);
-      navigate("/");
       setEmail("");
       setPassword("");
     }
