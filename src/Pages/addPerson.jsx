@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../Config/firebase";
+import { auth, db, storage } from "../Config/firebase";
+import { useNavigate } from "react-router";
+import Swal from "sweetalert2";
+import { onAuthStateChanged } from "firebase/auth";
 
 const AddPerson = () => {
   const [userName, setUserName] = useState("");
@@ -9,7 +12,20 @@ const AddPerson = () => {
   const [number, setNumber] = useState("");
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uid, setUid] = useState(null); 
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUid(user.uid); 
+      } else {
+        navigate("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
   async function AddUser() {
     if (!userName || !email || !number || !image) {
       alert("Please fill all fields");
@@ -19,32 +35,40 @@ const AddPerson = () => {
     setLoading(true);
 
     try {
-      // Upload image to Firebase Storage
-      const imageRef = ref(storage, `profilePictures/${image.name}`);
+      const imageRef = ref(storage, `ChatProfilePictures/${image.name}`);
       await uploadBytes(imageRef, image);
       const imageUrl = await getDownloadURL(imageRef);
 
-      // Save user data to Firestore
       const docRef = await addDoc(collection(db, "chatList"), {
         userName: userName,
         email: email,
         number: number,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        uid : uid
       });
 
-      console.log("Document written with ID: ", docRef.id);
+      Swal.fire({
+        title: "Good job!",
+        text: "User Added Successfully!",
+        icon: "success",
+      });
 
-      alert("User added successfully!");
-
-      // Clear the form fields
+      navigate("/");
       setUserName("");
       setEmail("");
       setNumber("");
       setImage(null);
-
     } catch (e) {
       console.error("Error adding document: ", e);
-      alert("Error adding user: " + e.message);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Something went wrong!",
+      });
+      setUserName("");
+      setEmail("");
+      setNumber("");
+      setImage(null);
     } finally {
       setLoading(false);
     }
@@ -52,7 +76,7 @@ const AddPerson = () => {
 
   return (
     <div className="w-[100%] h-[100vh] flex justify-center items-center bg-gray-50">
-      <div className="h-auto w-[350px] p-8 rounded-xl shadow-2xl bg-white">
+      <div className="h-auto w-[450px] p-8 rounded-xl shadow-2xl bg-white">
         <h1 className="text-center font-bold text-3xl mb-8 text-purple-600">
           Add User
         </h1>
@@ -107,7 +131,9 @@ const AddPerson = () => {
         {/* Add Button */}
         <div className="flex justify-center items-center mt-8">
           <button
-            className={`border border-purple-500 px-12 rounded-full bg-purple-500 text-white font-bold py-3 transition-transform transform hover:scale-105 shadow-lg ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`border border-purple-500 px-12 rounded-full bg-purple-500 text-white font-bold py-3 transition-transform transform hover:scale-105 shadow-lg ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             onClick={AddUser}
             disabled={loading}
           >
