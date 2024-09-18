@@ -18,7 +18,6 @@ const AddPerson = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setUid(user.uid); 
       } else {
         navigate("/login");
       }
